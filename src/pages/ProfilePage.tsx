@@ -7,21 +7,23 @@ import InterestGraph from '@/components/InterestGraph';
 import BlobShape from '@/components/BlobShape';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 // Mock data for the profile initial state
 const initialInterests = [
-  { id: '1', name: 'Photography', level: 4, relatedInterests: ['Landscape', 'Portrait'] },
-  { id: '2', name: 'Hiking', level: 3, relatedInterests: ['Nature', 'Outdoors'] },
-  { id: '3', name: 'Cooking', level: 5, relatedInterests: ['Italian', 'Baking'] },
-  { id: '4', name: 'Reading', level: 3, relatedInterests: ['Fiction', 'Non-fiction'] },
-  { id: '5', name: 'Painting', level: 2, relatedInterests: ['Watercolor', 'Acrylic'] },
-  { id: '6', name: 'Yoga', level: 4, relatedInterests: ['Meditation', 'Wellness'] },
-  { id: '7', name: 'Gardening', level: 3, relatedInterests: ['Flowers', 'Vegetables'] },
+  { id: '1', name: 'Photography', level: 4, relatedInterests: ['Landscape', 'Portrait'], fromConversation: true },
+  { id: '2', name: 'Hiking', level: 3, relatedInterests: ['Nature', 'Outdoors'], fromConversation: false },
+  { id: '3', name: 'Cooking', level: 5, relatedInterests: ['Italian', 'Baking'], fromConversation: true },
+  { id: '4', name: 'Reading', level: 3, relatedInterests: ['Fiction', 'Non-fiction'], fromConversation: false },
+  { id: '5', name: 'Painting', level: 2, relatedInterests: ['Watercolor', 'Acrylic'], fromConversation: false },
+  { id: '6', name: 'Yoga', level: 4, relatedInterests: ['Meditation', 'Wellness'], fromConversation: true },
+  { id: '7', name: 'Gardening', level: 3, relatedInterests: ['Flowers', 'Vegetables'], fromConversation: true },
 ];
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [interests, setInterests] = useState(initialInterests);
+  const [showFromConversation, setShowFromConversation] = useState(true);
   
   // Handler for clicking on an interest node
   const handleInterestClick = useCallback((interest) => {
@@ -35,6 +37,14 @@ const ProfilePage = () => {
         interest.id === updatedInterest.id ? updatedInterest : interest
       )
     );
+    
+    // Show toast when an interest from conversation is updated
+    if (updatedInterest.fromConversation) {
+      toast({
+        title: "Interest Updated",
+        description: `You've adjusted your level of interest in ${updatedInterest.name}`,
+      });
+    }
   }, []);
   
   // Handler for adding a new interest
@@ -45,7 +55,8 @@ const ProfilePage = () => {
         id: Date.now().toString(), // Simple ID generation
         name: interestName,
         level: 3, // Default level
-        relatedInterests: []
+        relatedInterests: [],
+        fromConversation: false
       }
     ]);
   }, []);
@@ -55,6 +66,11 @@ const ProfilePage = () => {
     setInterests(currentInterests => 
       currentInterests.filter(interest => interest.id !== interestId)
     );
+  }, []);
+  
+  // Toggle visibility of interests from conversation
+  const toggleFromConversation = useCallback(() => {
+    setShowFromConversation(prev => !prev);
   }, []);
 
   return (
@@ -79,11 +95,24 @@ const ProfilePage = () => {
                 Update with Chat
               </Button>
             </div>
+            
+            {/* Toggle for conversation-derived interests */}
+            <div className="flex items-center mt-2">
+              <label className="text-sm flex items-center cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={showFromConversation}
+                  onChange={toggleFromConversation}
+                  className="mr-2 h-4 w-4"
+                />
+                Show interests identified from your chat with Romy
+              </label>
+            </div>
           </div>
           
           <div className="mb-6">
             <InterestGraph 
-              interests={interests}
+              interests={interests.filter(i => !i.fromConversation || showFromConversation)}
               onInterestClick={handleInterestClick}
               onInterestUpdate={handleInterestUpdate}
               onInterestAdd={handleInterestAdd}
